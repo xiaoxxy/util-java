@@ -24,23 +24,18 @@ public final class SSDBUtils {
 	public static void start() {
 
 		// 载入文件
-		Log.info("连接SSDB服务器...");
+		logger.info("连接SSDB服务器...");
 
-		Document configElement = ConfigFileParseHelper.getRootElement();
-		NodeList ssdbNodeList = configElement.getElementsByTagName("ssdb");
-		Element item = null;
-
-		item = (Element) ssdbNodeList.item(0);
-		String host = item.getAttribute("host").trim();
-		String passwd = item.getAttribute("passwd");
-		int port = Integer.parseInt(item.getAttribute("port").trim());
-		int timeout = Integer.parseInt(item.getAttribute("timeout").trim());
-		//ssdb = SSDBs.simple(host, port, timeout);
-		ssdb = SSDBs.pool(host, port, timeout, null);
+		String host= PlatformProp.getProperty("ssdb.host");
+		String passwd = PlatformProp.getProperty("ssdb.password");
+		int port = Integer.parseInt(PlatformProp.getProperty("ssdb.port"));
+		int timeout =  Integer.parseInt(PlatformProp.getProperty("ssdb.timeout"));
+		ssdb = SSDBs.pool(host, port, timeout,null);
 
 		if (passwd.length() != 0)
 			ssdb.auth(passwd);
 		ssdb.ping();
+		logger.info("连接SSDB服务器完成");
 	}
 
 	/**
@@ -165,12 +160,6 @@ public final class SSDBUtils {
 	public static SSDB getInstance(){
 		if(ssdb == null)
 			start();
-		try {
-			if ( !"ok".equals(ssdb.ping().stat))
-				start();
-		}catch (Exception e){
-			start();
-		}
 		return ssdb;
 	}
 }
