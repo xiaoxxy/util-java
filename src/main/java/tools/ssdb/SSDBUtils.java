@@ -1,23 +1,19 @@
-package tools.ssdb;
+package ms.auth.common;
 
 import java.io.IOException;
 
+import tools.common.PlatformProp;
 import org.nutz.ssdb4j.SSDBs;
 import org.nutz.ssdb4j.spi.Response;
 import org.nutz.ssdb4j.spi.SSDB;
 import org.nutz.ssdb4j.spi.SSDBException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import tools.common.ClassHelper;
-import tools.common.ConfigFileParseHelper;
-import tools.log.Log;
-
-
 public final class SSDBUtils {
+
+	protected static final Logger logger = LoggerFactory.getLogger(SSDBUtils.class);
 
 	public static SSDB ssdb = null;
 
@@ -31,6 +27,22 @@ public final class SSDBUtils {
 		int port = Integer.parseInt(PlatformProp.getProperty("ssdb.port"));
 		int timeout =  Integer.parseInt(PlatformProp.getProperty("ssdb.timeout"));
 		ssdb = SSDBs.pool(host, port, timeout,null);
+		// 或者指定连接池配置
+		//		GenericObjectPool.Config config = new GenericObjectPool.Config();
+		//		config.lifo = true;
+		//		config.maxActive = 3;
+		//		config.maxIdle = 3;
+		//		config.maxWait = 1000 * 5;
+		//		config.minEvictableIdleTimeMillis = 1000 * 10;
+		//		config.minIdle = 3;
+		//		config.numTestsPerEvictionRun = 100;
+		//		config.softMinEvictableIdleTimeMillis = 1000 * 10;
+		//		config.testOnBorrow = true;
+		//		config.testOnReturn = true;
+		//		config.testWhileIdle = true;
+		//		config.timeBetweenEvictionRunsMillis = 1000 * 5;
+		//		config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_BLOCK;
+		//		ssdb = SSDBs.pool(host, port, timeout,config);
 
 		if (passwd.length() != 0)
 			ssdb.auth(passwd);
@@ -58,14 +70,7 @@ public final class SSDBUtils {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} catch (SSDBException e) {
-			start();
-			Object tryAgain = ClassHelper.tryAgain(e, new Class[] { String.class, String.class, Object.class },
-					new Object[] { name, key, val });
-			if (tryAgain == null) {
-				Log.error(e);
-			} else {
-				return (boolean) tryAgain;
-			}
+			logger.error(e.getMessage());
 		}
 		return false;
 	}
@@ -86,14 +91,7 @@ public final class SSDBUtils {
 				return true;
 			}
 		} catch (SSDBException e) {
-			start();
-			Object tryAgain = ClassHelper.tryAgain(e, new Class[] { String.class, String.class, Object.class },
-					new Object[] { name, key, val });
-			if (tryAgain == null) {
-				Log.error(e);
-			} else {
-				return (boolean) tryAgain;
-			}
+			logger.error(e.getMessage());
 		}
 		return false;
 	}
@@ -111,14 +109,7 @@ public final class SSDBUtils {
 				return true;
 			}
 		} catch (SSDBException e) {
-			start();
-			Object tryAgain = ClassHelper.tryAgain(e, new Class[] { String.class, String.class, Object.class },
-					new Object[] { key, val });
-			if (tryAgain == null) {
-				Log.error(e);
-			} else {
-				return (boolean) tryAgain;
-			}
+			logger.error(e.getMessage());
 		}
 		return false;
 	}
@@ -147,19 +138,16 @@ public final class SSDBUtils {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} catch (SSDBException e) {
-			start();
-			Object tryAgain = ClassHelper.tryAgain(e, new Class[] { String.class, String.class, Class.class },
-					new Object[] { name, key, clazz });
-			if (tryAgain == null) {
-				Log.error(e);
-			}
-			return (T) tryAgain;
+			logger.error(e.getMessage());
 		}
+		return null;
 	}
-	
+
 	public static SSDB getInstance(){
 		if(ssdb == null)
 			start();
 		return ssdb;
 	}
+
 }
+
